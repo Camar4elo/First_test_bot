@@ -1,4 +1,3 @@
-from doctest import master
 import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import settings
@@ -15,22 +14,19 @@ def greet_user(update, context):
     update.message.reply_text('Приветствую тебя, о Великий пользователь!')
 
 def user_ask_planet(update, context):
-    planets = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
+    planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Moon', 'Sun']
     text = update.message.text.split()
-    for user_planet in text:
-        try:
-            planets.index(user_planet)
-            print(user_planet)
-            planet = getattr(ephem, user_planet)(datetime.datetime.today().strftime("%Y/%m/%d"))
-            print(planet)
-            constellation = ephem.constellation(planet)
-            update.message.reply_text(f'Сегодня эта планета находится в созведии: {constellation}')
-        except ValueError:
-            None
+    user_planet = text[1].capitalize()
+    if user_planet in planets:
+        planet = getattr(ephem, user_planet)(datetime.datetime.today().strftime("%Y/%m/%d"))
+        constellation = ephem.constellation(planet)
+        update.message.reply_text(f'Сегодня эта планета находится в созведии: {constellation}')
+    else:
+        update.message.reply_text(f'Такой планеты нет (((. Попробуйте поискать в параллельной вселенной.')
+        
 
 def talk_to_me(update, context):
     text = update.message.text
-    print(text)
     update.message.reply_text(text)
 
 def main():
