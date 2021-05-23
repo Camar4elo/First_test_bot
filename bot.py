@@ -20,7 +20,7 @@ def user_ask_planet(update, context):
     if user_planet in planets:
         planet = getattr(ephem, user_planet)(datetime.datetime.today().strftime("%Y/%m/%d"))
         constellation = ephem.constellation(planet)
-        update.message.reply_text(f'Сегодня эта планета находится в созведии: {constellation}')
+        update.message.reply_text(f'Сегодня эта планета находится в созведии: {constellation[1]}')
     else:
         update.message.reply_text(f'Такой планеты нет (((. Попробуйте поискать в параллельной вселенной.')
         
