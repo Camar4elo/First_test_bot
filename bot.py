@@ -63,7 +63,6 @@ def user_ask_full_moon(update, context):
     exceptions = ['.', '-', '_', ':']
     text = update.message.text.split()[1]
     for symbol in exceptions:
-        print(symbol)
         if symbol in text:
             text = text.split(sep=symbol)
             updated_text = '/'.join(text)
