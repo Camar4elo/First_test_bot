@@ -1,6 +1,7 @@
 import logging
 from math import e
 from os import sep
+from posixpath import join
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import settings
 import ephem
@@ -77,33 +78,42 @@ def user_ask_full_moon(update, context):
 def get_cities():
     with open('cities.txt', 'r', encoding='utf-8') as file:
         content = file.read()
-        cities = content.split()
+        cities = content.split(sep='\n')
+        # for city in cities:
+        #     if city[-1] == 'ь':
+        #         new_city = city.replace('ь', '')
+        #         cities.remove(city)
+        #         cities.append(new_city)
+        #         print(city)
+        #         print(new_city)
+        # cities.sort()
         return cities
 
 
 def user_play_cities(update, context):
     cities = get_cities()
     user_id = str(update.message.from_user["id"])
-    user_city = update.message.text.split()[1]
+    user_city = update.message.text.split()[1:]
+    user_city = ' '.join(user_city)
     if user_id not in context.user_data:
         context.user_data.update({user_id : cities.copy()})
-    if user_id in context.user_data:
-        if user_city in context.user_data[user_id]:
-            context.user_data[user_id].remove(user_city)
-            update.message.reply_text(f'Ваш город: {user_city}')
-            for bot_city in context.user_data[user_id]:
-                bot_city = bot_city.lower()
-                if bot_city[0] == user_city[-1]:
-                    bot_city = bot_city.capitalize()
-                    context.user_data[user_id].remove(bot_city)
-                    update.message.reply_text(f'Мой город: {bot_city}')
-                    break
-                elif bot_city[0] != user_city[-1]:
-                    continue
-                else:
-                    update.message.reply_text(f'Кажется городов оканчивающихся на {user_city[-1]} больше нет')
-        else:
-            update.message.reply_text(f'Такого города нет или этот город уже был')
+    city_db = context.user_data[user_id]
+    if user_city in city_db:
+        city_db.remove(user_city)
+        update.message.reply_text(f'Ваш город: {user_city}')
+        len_city_db = len(city_db) - 1
+        for bot_city in city_db:
+            index_bot_city = city_db.index(bot_city)
+            bot_city = bot_city.lower()
+            if bot_city[0] == user_city[-1]:
+                bot_city = bot_city.capitalize()
+                city_db.remove(bot_city)
+                update.message.reply_text(f'Мой город: {bot_city}')
+                break
+            elif bot_city[0] != user_city[-1] and index_bot_city == len_city_db:
+                update.message.reply_text(f'Кажется городов оканчивающихся на букву {user_city[-1]} больше нет')
+    else:
+        update.message.reply_text(f'Такого города нет или этот город уже был')
 
 
 def main():
