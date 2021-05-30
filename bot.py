@@ -94,19 +94,30 @@ def user_play_cities(update, context):
     cities = get_cities()
     user_id = str(update.message.from_user["id"])
     user_city = update.message.text.split()[1:]
-    user_city = ' '.join(user_city)
+    updated_user_city = []
+    for word in user_city:
+        word = word.capitalize()
+        updated_user_city.append(word)
+    user_city = ' '.join(updated_user_city)
     if user_id not in context.user_data:
         context.user_data.update({user_id : cities.copy()})
     city_db = context.user_data[user_id]
     if user_city in city_db:
-        city_db.remove(user_city)
         update.message.reply_text(f'Ваш город: {user_city}')
+        city_db.remove(user_city)
+        if user_city[-1] == 'ь':
+            user_city = user_city.replace('ь', '')
         len_city_db = len(city_db) - 1
         for bot_city in city_db:
             index_bot_city = city_db.index(bot_city)
             bot_city = bot_city.lower()
             if bot_city[0] == user_city[-1]:
-                bot_city = bot_city.capitalize()
+                bot_city = bot_city.split()
+                updated_bot_city = []
+                for word in bot_city:
+                    word = word.capitalize()
+                    updated_bot_city.append(word)
+                bot_city = ' '.join(updated_bot_city)
                 city_db.remove(bot_city)
                 update.message.reply_text(f'Мой город: {bot_city}')
                 break
