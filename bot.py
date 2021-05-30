@@ -53,10 +53,9 @@ def user_ask_wordcount(update, context):
                     if char in exceptions_list:
                         word = word.replace(f'{char}', '')
                 words_list.append(word)
-                if word in exceptions_list:
-                    words_list.remove(word)
-        if len(words_list) > 0:
-            update.message.reply_text(f'Вы написали количество слов: {len(words_list)}')
+        string = ' '.join(words_list)
+        if len(string.split()) > 0:
+            update.message.reply_text(f'Вы написали количество слов: {len(string.split())}')
         else:
             update.message.reply_text(f'Кажется, что Вы не написали слов...')
 
