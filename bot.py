@@ -79,25 +79,17 @@ def get_cities():
     with open('cities.txt', 'r', encoding='utf-8') as file:
         content = file.read()
         cities = content.split(sep='\n')
-        # for city in cities:
-        #     if city[-1] == 'ь':
-        #         new_city = city.replace('ь', '')
-        #         cities.remove(city)
-        #         cities.append(new_city)
-        #         print(city)
-        #         print(new_city)
-        # cities.sort()
         return cities
 
 
 def user_play_cities(update, context):
     cities = get_cities()
+    exceptions = ['ь', 'ы', 'ъ', 'ё', 'ц']
     user_id = str(update.message.from_user["id"])
     user_city = update.message.text.split()[1:]
     updated_user_city = []
     for word in user_city:
-        word = word.capitalize()
-        updated_user_city.append(word)
+        updated_user_city.append(word.capitalize())
     user_city = ' '.join(updated_user_city)
     if user_id not in context.user_data:
         context.user_data.update({user_id : cities.copy()})
@@ -105,8 +97,9 @@ def user_play_cities(update, context):
     if user_city in city_db:
         update.message.reply_text(f'Ваш город: {user_city}')
         city_db.remove(user_city)
-        if user_city[-1] == 'ь':
-            user_city = user_city.replace('ь', '')
+        if user_city[-1] in exceptions:
+            user_city = user_city.replace(user_city[-1], '')
+        update.message.reply_text(f'Тогда мой город на букву "{user_city[-1].capitalize()}"')
         len_city_db = len(city_db) - 1
         for bot_city in city_db:
             index_bot_city = city_db.index(bot_city)
@@ -115,16 +108,18 @@ def user_play_cities(update, context):
                 bot_city = bot_city.split()
                 updated_bot_city = []
                 for word in bot_city:
-                    word = word.capitalize()
-                    updated_bot_city.append(word)
+                    updated_bot_city.append(word.capitalize())
                 bot_city = ' '.join(updated_bot_city)
-                city_db.remove(bot_city)
                 update.message.reply_text(f'Мой город: {bot_city}')
+                city_db.remove(bot_city)
+                if bot_city[-1] in exceptions:
+                    bot_city = bot_city.replace(bot_city[-1], '')
+                update.message.reply_text(f'Тогда Ваш город на букву "{bot_city[-1].capitalize()}"')
                 break
             elif bot_city[0] != user_city[-1] and index_bot_city == len_city_db:
-                update.message.reply_text(f'Кажется городов оканчивающихся на букву {user_city[-1]} больше нет')
+                update.message.reply_text(f'Кажется городов оканчивающихся на букву "{user_city[-1].capitalize()}" больше нет')
     else:
-        update.message.reply_text(f'Такого города нет или этот город уже был')
+        update.message.reply_text(f'Города {user_city} нет или этот город уже был')
 
 
 def main():
