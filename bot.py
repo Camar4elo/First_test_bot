@@ -2,6 +2,7 @@ import logging
 from math import e
 from os import sep
 from posixpath import join
+import re
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import settings
 import ephem
@@ -81,46 +82,66 @@ def get_cities():
         return cities
 
 
+def replace_char(city):
+    exceptions = ['ь', 'ы', 'ъ', 'ё', 'ц',]
+    if city[-1] in exceptions:
+        city = city.replace(city[-1], '')
+    return city
+ 
+
+def city_transformation(city):
+    words = []
+    for word in city:
+        words.append(word.capitalize())
+    city = ' '.join(words)
+    return city
+
+
+def get_bot_city(cities_dict, user_city, update, context):
+    max_cities_count = len(cities_dict) - 1
+    for bot_city in cities_dict:
+        bot_city_number = cities_dict.index(bot_city)
+        bot_city = bot_city.lower()
+        if bot_city[0] == user_city[-1]:
+            bot_city = bot_city.split()
+            bot_city = city_transformation(bot_city)
+            update.message.reply_text(f'Мой город: {bot_city}')
+            cities_dict.remove(bot_city)
+            bot_city = replace_char(bot_city)
+            context.user_data.update({'letters' : [bot_city[-1].capitalize()]})
+            update.message.reply_text(f'Тогда Ваш город на букву "{bot_city[-1].capitalize()}"')
+            break
+        elif bot_city[0] != user_city[-1] and bot_city_number == max_cities_count:
+            update.message.reply_text(f'Кажется городов оканчивающихся на букву "{user_city[-1].capitalize()}" больше нет')
+            context.user_data.update({'letters': ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я']})
+
+
 def user_play_cities(update, context):
     cities = get_cities()
-    exceptions = ['ь', 'ы', 'ъ', 'ё', 'ц']
     user_id = str(update.message.from_user["id"])
     user_city = update.message.text.split()[1:]
-    updated_user_city = []
-    for word in user_city:
-        updated_user_city.append(word.capitalize())
-    user_city = ' '.join(updated_user_city)
+    user_city = city_transformation(user_city)
     if user_id not in context.user_data:
         context.user_data.update({user_id : cities.copy()})
-    city_db = context.user_data[user_id]
-    if user_city in city_db:
-        update.message.reply_text(f'Ваш город: {user_city}')
-        city_db.remove(user_city)
-        if user_city[-1] in exceptions:
-            user_city = user_city.replace(user_city[-1], '')
-        update.message.reply_text(f'Тогда мой город на букву "{user_city[-1].capitalize()}"')
-        len_city_db = len(city_db) - 1
-        for bot_city in city_db:
-            index_bot_city = city_db.index(bot_city)
-            bot_city = bot_city.lower()
-            if bot_city[0] == user_city[-1]:
-                bot_city = bot_city.split()
-                updated_bot_city = []
-                for word in bot_city:
-                    updated_bot_city.append(word.capitalize())
-                bot_city = ' '.join(updated_bot_city)
-                update.message.reply_text(f'Мой город: {bot_city}')
-                city_db.remove(bot_city)
-                if bot_city[-1] in exceptions:
-                    bot_city = bot_city.replace(bot_city[-1], '')
-                update.message.reply_text(f'Тогда Ваш город на букву "{bot_city[-1].capitalize()}"')
-                break
-            elif bot_city[0] != user_city[-1] and index_bot_city == len_city_db:
-                update.message.reply_text(f'Кажется городов оканчивающихся на букву "{user_city[-1].capitalize()}" больше нет')
+        context.user_data.update({'letters' : ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я']})
+    cities_dict = context.user_data[user_id]
+    letters = context.user_data['letters']
+    if user_city in cities_dict:
+        if user_city[0] not in letters:
+            update.message.reply_text(f'Ваш город должен начинаться с буквы "{letters[0]}"')
+        else:
+            update.message.reply_text(f'Ваш город: {user_city}')
+            cities_dict.remove(user_city)
+            user_city = replace_char(user_city)
+            update.message.reply_text(f'Тогда мой город на букву "{user_city[-1].capitalize()}"')
+            get_bot_city(cities_dict, user_city, update, context)
     else:
-        update.message.reply_text(f'Города {user_city} нет или этот город уже был')
+        if user_city[0] not in letters:
+            update.message.reply_text(f'Ваш город должен начинаться с буквы "{letters[0]}"')
+        else:
+            update.message.reply_text(f'Города {user_city} нет или этот город уже был')
 
-
+        
 def main():
     mybot = Updater(settings.API_KEY, use_context=True, request_kwargs=PROXY)
     dp = mybot.dispatcher
