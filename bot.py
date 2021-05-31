@@ -98,9 +98,9 @@ def city_transformation(city):
 
 
 def get_bot_city(cities_dict, user_city, update, context):
-    max_cities_count = len(cities_dict) - 1
+    cities_count = len(cities_dict) - 1
     for bot_city in cities_dict:
-        bot_city_number = cities_dict.index(bot_city)
+        bot_city_count = cities_dict.index(bot_city)
         bot_city = bot_city.lower()
         if bot_city[0] == user_city[-1]:
             bot_city = bot_city.split()
@@ -108,13 +108,21 @@ def get_bot_city(cities_dict, user_city, update, context):
             update.message.reply_text(f'Мой город: {bot_city}')
             cities_dict.remove(bot_city)
             bot_city = replace_char(bot_city)
-            context.user_data.update({'letters' : [bot_city[-1].capitalize()]})
-            update.message.reply_text(f'Тогда Ваш город на букву "{bot_city[-1].capitalize()}"')
+            for city in cities_dict:
+                city_count = len(cities_dict) - 1
+                if city[0] == bot_city[-1].capitalize():
+                    update.message.reply_text(f'Тогда Ваш город на букву "{bot_city[-1].capitalize()}"')
+                    context.user_data.update({'letters' : [bot_city[-1].capitalize()]})
+                    break
+                elif city[0] != bot_city[-1].capitalize() and city_count == cities_count:
+                    update.message.reply_text(f'Кажется, городов оканчивающихся на букву "{user_city[-1].capitalize()}" больше нет напишите город с любой буквы')
+                    context.user_data.update({'letters': ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я']})
+                    break
             break
-        elif bot_city[0] != user_city[-1] and bot_city_number == max_cities_count:
-            update.message.reply_text(f'Кажется городов оканчивающихся на букву "{user_city[-1].capitalize()}" больше нет')
+        elif bot_city[0] != user_city[-1] and bot_city_count == cities_count:
+            update.message.reply_text(f'Кажется, городов оканчивающихся на букву "{user_city[-1].capitalize()}" больше нет напишите город с любой буквы')
             context.user_data.update({'letters': ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З', 'И', 'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ч', 'Ш', 'Щ', 'Э', 'Ю', 'Я']})
-
+            break
 
 def user_play_cities(update, context):
     cities = get_cities()
